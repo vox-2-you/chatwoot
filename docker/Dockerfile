@@ -13,6 +13,16 @@ ARG BUNDLE_WITHOUT="development:test"
 ENV BUNDLE_WITHOUT ${BUNDLE_WITHOUT}
 ENV BUNDLER_VERSION=2.5.16
 
+# Compilar grpc e protobuf nativamente consome muita memoria por job. O padrao
+# continua 4; maquinas com pouca RAM baixam com --build-arg BUNDLE_JOBS=2.
+ARG BUNDLE_JOBS=4
+
+# A extensao do grpc chama make com -j igual ao numero de CPUs do builder,
+# ignorando o -j do bundler, e derruba o cc1plus por falta de memoria.
+# ref: https://github.com/grpc/grpc/pull/28250
+ARG GRPC_RUBY_BUILD_PROCS=4
+ENV GRPC_RUBY_BUILD_PROCS=${GRPC_RUBY_BUILD_PROCS}
+
 ARG RAILS_SERVE_STATIC_FILES=true
 ENV RAILS_SERVE_STATIC_FILES ${RAILS_SERVE_STATIC_FILES}
 
@@ -67,8 +77,8 @@ RUN bundle config set --local force_ruby_platform true
 
 # Do not install development or test gems in production
 RUN if [ "$RAILS_ENV" = "production" ]; then \
-  bundle config set without 'development test'; bundle install -j 4 -r 3; \
-  else bundle install -j 4 -r 3; \
+  bundle config set without 'development test'; bundle install -j ${BUNDLE_JOBS} -r 3; \
+  else bundle install -j ${BUNDLE_JOBS} -r 3; \
   fi
 
 COPY package.json pnpm-lock.yaml ./

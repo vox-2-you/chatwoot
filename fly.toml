@@ -1,0 +1,68 @@
+# Deploy do Chatwoot no Fly.io.
+# Uma app com dois process groups (web + worker) a partir da mesma imagem.
+# Postgres (fly mpg), Redis (fly redis) e o storage (fly storage) sao extensoes
+# do proprio Fly — veja DEPLOY_FLY.md.
+
+app = "vox2you-chatwoot"
+primary_region = "gru"
+
+[build]
+  dockerfile = "docker/Dockerfile"
+  # A imagem oficial abaixo pula o build de ~15 min, mas nao contem o ajuste de
+  # extensoes do db/schema.rb — so serve com Postgres proprio, nao com o mpg.
+  # image = "chatwoot/chatwoot:v4.17.1"
+
+[deploy]
+  # Carrega o schema na primeira subida e roda as migrations nas seguintes.
+  release_command = "bundle exec rails db:chatwoot_prepare"
+  strategy = "rolling"
+
+[env]
+  RAILS_ENV = "production"
+  NODE_ENV = "production"
+  INSTALLATION_ENV = "fly"
+  RAILS_LOG_TO_STDOUT = "true"
+  RAILS_SERVE_STATIC_FILES = "true"
+  PORT = "3000"
+  # Timeout maior que o padrão de 14s para as migrations pesadas não estourarem.
+  POSTGRES_STATEMENT_TIMEOUT = "600s"
+  WEB_CONCURRENCY = "2"
+  RAILS_MAX_THREADS = "5"
+  SIDEKIQ_CONCURRENCY = "5"
+  # Cadastro público desligado: os usuários são criados pelo super admin.
+  ENABLE_ACCOUNT_SIGNUP = "false"
+
+[processes]
+  web = "bundle exec rails server -b 0.0.0.0 -p 3000 -e production"
+  worker = "bundle exec sidekiq -C config/sidekiq.yml"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_start_machines = true
+  # A máquina não pode hibernar: o ActionCable mantém websockets abertos.
+  auto_stop_machines = false
+  min_machines_running = 1
+  processes = ["web"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 150
+    hard_limit = 200
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "GET"
+    path = "/api"
+
+[[vm]]
+  processes = ["web"]
+  size = "shared-cpu-2x"
+  memory = "2gb"
+
+[[vm]]
+  processes = ["worker"]
+  size = "shared-cpu-2x"
+  memory = "2gb"

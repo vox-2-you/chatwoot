@@ -13,6 +13,7 @@ import {
 export const login = async ({
   ssoAccountId,
   ssoConversationId,
+  ssoRedirectPath,
   ...credentials
 }) => {
   try {
@@ -32,6 +33,7 @@ export const login = async ({
     window.location = getLoginRedirectURL({
       ssoAccountId,
       ssoConversationId,
+      ssoRedirectPath,
       user: response.data.data,
     });
     return null;

@@ -19,11 +19,11 @@ import ConversationInfo from './ConversationInfo.vue';
 import CustomAttributes from './customAttributes/CustomAttributes.vue';
 import SharedFiles from './SharedFiles.vue';
 import Draggable from 'vuedraggable';
-import MacrosList from './Macros/List.vue';
 import ShopifyOrdersList from 'dashboard/components/widgets/conversation/ShopifyOrdersList.vue';
 import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader.vue';
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
+import DashboardAppFrame from 'dashboard/components/widgets/DashboardApp/Frame.vue';
 
 const props = defineProps({
   conversationId: {
@@ -45,6 +45,17 @@ const {
 
 const dragging = ref(false);
 const conversationSidebarItems = ref([]);
+
+/**
+ * Aplicativos do painel, que antes eram abas ao lado de "Mensagens" e agora vivem aqui.
+ *
+ * O `Frame` só busca o contexto quando `isVisible` é verdadeiro, então a sanfona aberta é
+ * o que liga o iframe — fechada, ele nem carrega. O `position` fica fora da faixa de
+ * índices que o frame usaria numa lista para os ids não colidirem.
+ */
+const dashboardApps = useMapGetter('dashboardApps/getRecords');
+const DASHBOARD_APP_SIDEBAR_POSITION = 100;
+const dashboardAppStateKey = id => `is_dashboard_app_${id}_open`;
 
 const shopifyIntegration = useFunctionGetter(
   'integrations/getIntegration',
@@ -126,6 +137,7 @@ onMounted(() => {
   conversationSidebarItems.value = conversationSidebarItemsOrder.value;
   getContactDetails();
   store.dispatch('attributes/get', 0);
+  store.dispatch('dashboardApps/get');
   // Load integrations to ensure linear integration state is available
   store.dispatch('integrations/get', 'linear');
 });
@@ -150,8 +162,41 @@ onMounted(() => {
         @end="onDragEnd"
       >
         <template #item="{ element }">
+          <!-- O `gap-3` do Draggable só separa itens da lista, e os aplicativos são um
+               item só: sem o gap aqui, as sanfonas ficam mais juntas que as nativas. -->
           <div
-            v-if="element.name === 'conversation_actions'"
+            v-if="element.name === 'dashboard_apps'"
+            class="flex flex-col gap-3"
+          >
+            <AccordionItem
+              v-for="(dashboardApp, index) in dashboardApps"
+              :key="dashboardApp.id"
+              :title="dashboardApp.title"
+              :is-open="isContactSidebarItemOpen(dashboardAppStateKey(dashboardApp.id))"
+              compact
+              @toggle="
+                value =>
+                  toggleSidebarUIState(
+                    dashboardAppStateKey(dashboardApp.id),
+                    value
+                  )
+              "
+            >
+              <div class="h-96">
+                <DashboardAppFrame
+                  :key="currentChat.id + '-' + dashboardApp.id"
+                  :is-visible="
+                    isContactSidebarItemOpen(dashboardAppStateKey(dashboardApp.id))
+                  "
+                  :config="dashboardApp.content"
+                  :position="DASHBOARD_APP_SIDEBAR_POSITION + index"
+                  :current-chat="currentChat"
+                />
+              </div>
+            </AccordionItem>
+          </div>
+          <div
+            v-else-if="element.name === 'conversation_actions'"
             class="conversation--actions"
           >
             <AccordionItem
@@ -238,19 +283,6 @@ onMounted(() => {
               />
             </AccordionItem>
           </div>
-          <woot-feature-toggle
-            v-else-if="element.name === 'macros'"
-            feature-key="macros"
-          >
-            <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.MACROS')"
-              :is-open="isContactSidebarItemOpen('is_macro_open')"
-              compact
-              @toggle="value => toggleSidebarUIState('is_macro_open', value)"
-            >
-              <MacrosList :conversation-id="conversationId" />
-            </AccordionItem>
-          </woot-feature-toggle>
           <div
             v-else-if="
               element.name === 'linear_issues' &&

@@ -40,8 +40,6 @@ export default {
   data() {
     return {
       countries: countries,
-      companyName: '',
-      description: '',
       email: '',
       name: '',
       phoneNumber: '',
@@ -75,13 +73,10 @@ export default {
     name: {
       required,
     },
-    description: {},
     email: {
       email,
     },
-    companyName: {},
     phoneNumber: {},
-    bio: {},
   },
   computed: {
     parsePhoneNumber() {
@@ -168,7 +163,6 @@ export default {
       this.name = name || '';
       this.email = emailAddress || '';
       this.phoneNumber = phoneNumber || '';
-      this.companyName = additionalAttributes.company_name || '';
       this.country = {
         id: additionalAttributes.country_code || '',
         name:
@@ -176,7 +170,6 @@ export default {
           this.$t('CONTACT_FORM.FORM.COUNTRY.SELECT_COUNTRY'),
       };
       this.city = additionalAttributes.city || '';
-      this.description = additionalAttributes.description || '';
       this.avatarUrl = this.contact.thumbnail || '';
       const {
         social_profiles: socialProfiles = {},
@@ -218,8 +211,6 @@ export default {
         phone_number: this.setPhoneNumber,
         additional_attributes: {
           ...this.contact.additional_attributes,
-          description: this.description,
-          company_name: this.companyName,
           country_code: this.country.id,
           country:
             this.country.name ===
@@ -345,17 +336,6 @@ export default {
         </label>
       </div>
     </div>
-    <div class="w-full">
-      <label :class="{ error: v$.description.$error }">
-        {{ $t('CONTACT_FORM.FORM.BIO.LABEL') }}
-        <textarea
-          v-model="description"
-          type="text"
-          :placeholder="$t('CONTACT_FORM.FORM.BIO.PLACEHOLDER')"
-          @input="v$.description.$touch"
-        />
-      </label>
-    </div>
     <div>
       <div class="w-full">
         <label
@@ -384,12 +364,6 @@ export default {
         </div>
       </div>
     </div>
-    <woot-input
-      v-model="companyName"
-      class="w-full"
-      :label="$t('CONTACT_FORM.FORM.COMPANY_NAME.LABEL')"
-      :placeholder="$t('CONTACT_FORM.FORM.COMPANY_NAME.PLACEHOLDER')"
-    />
     <div class="w-full mb-4">
       <label>
         {{ $t('CONTACT_FORM.FORM.COUNTRY.LABEL') }}

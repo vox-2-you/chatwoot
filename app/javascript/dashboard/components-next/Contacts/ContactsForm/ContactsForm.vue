@@ -5,11 +5,8 @@ import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
 import { splitName } from '@chatwoot/utils';
 import countries from 'shared/constants/countries.js';
-import { FEATURE_FLAGS } from 'dashboard/featureFlags';
-import { useAccount } from 'dashboard/composables/useAccount';
 import Input from 'dashboard/components-next/input/Input.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
-import CompanySelector from 'dashboard/components-next/Companies/CompanySelector.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PhoneNumberInput from 'dashboard/components-next/phonenumberinput/PhoneNumberInput.vue';
 
@@ -31,7 +28,6 @@ const props = defineProps({
 const emit = defineEmits(['update']);
 
 const { t } = useI18n();
-const { currentAccount, isCloudFeatureEnabled } = useAccount();
 
 const FORM_CONFIG = {
   FIRST_NAME: { field: 'firstName' },
@@ -40,8 +36,6 @@ const FORM_CONFIG = {
   PHONE_NUMBER: { field: 'phoneNumber' },
   CITY: { field: 'additionalAttributes.city' },
   COUNTRY: { field: 'additionalAttributes.countryCode' },
-  BIO: { field: 'additionalAttributes.description' },
-  COMPANY_NAME: { field: 'additionalAttributes.companyName' },
 };
 
 const SOCIAL_CONFIG = {
@@ -93,15 +87,6 @@ const v$ = useVuelidate(validationRules, state);
 
 const isFormInvalid = computed(() => v$.value.$invalid);
 const normalizeWhatsAppUsername = value => value?.toString().replace(/^@+/, '');
-const hasCompaniesFeature = computed(
-  () =>
-    currentAccount.value?.id && isCloudFeatureEnabled(FEATURE_FLAGS.COMPANIES)
-);
-const showCompanySelector = computed(
-  () =>
-    hasCompaniesFeature.value &&
-    (Boolean(state.companyId) || !state.additionalAttributes.companyName)
-);
 
 const emitContactUpdate = async () => {
   const isFormValid = await v$.value.$validate();
@@ -249,12 +234,6 @@ const handleCountrySelection = value => {
   emit('update', state);
 };
 
-const handleCompanySelection = async ({ id, name }) => {
-  state.companyId = id || '';
-  state.additionalAttributes.companyName = name || '';
-  await emitContactUpdate();
-};
-
 const handleSocialProfileInput = item => {
   const key = item.key.toLowerCase();
   if (key === 'whatsapp') {
@@ -316,13 +295,6 @@ defineExpose({
             v-model="getFormBinding(item.key).value"
             :placeholder="item.placeholder"
             :show-border="isDetailsView"
-          />
-          <CompanySelector
-            v-else-if="item.key === 'COMPANY_NAME' && showCompanySelector"
-            :model-value="state.companyId"
-            :selected-name="state.additionalAttributes.companyName"
-            :is-details-view="isDetailsView"
-            @select="handleCompanySelection"
           />
           <Input
             v-else

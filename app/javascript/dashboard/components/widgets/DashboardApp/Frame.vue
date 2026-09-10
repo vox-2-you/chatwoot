@@ -61,12 +61,19 @@ export default {
     },
   },
   watch: {
-    isVisible(isVisible) {
-      if (isVisible) {
-        const hasOpened = this.hasOpenedAtleastOnce;
-        this.hasOpenedAtleastOnce = true;
-        if (hasOpened) this.sendContextToFrames();
-      }
+    // `immediate` porque na lateral o componente só é criado quando a sanfona abre — ou
+    // seja, já nasce com `isVisible` verdadeiro, e um watcher comum nunca dispararia:
+    // `hasOpenedAtleastOnce` ficaria falso e o iframe não chegaria a ser desenhado.
+    // Na aba, onde o componente monta invisível, o comportamento é o mesmo de antes.
+    isVisible: {
+      immediate: true,
+      handler(isVisible) {
+        if (isVisible) {
+          const hasOpened = this.hasOpenedAtleastOnce;
+          this.hasOpenedAtleastOnce = true;
+          if (hasOpened) this.sendContextToFrames();
+        }
+      },
     },
     customAttributes() {
       this.sendContextToFrames();

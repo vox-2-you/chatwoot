@@ -259,9 +259,6 @@ export default {
           </div>
         </div>
 
-        <p v-if="additionalAttributes.description" class="break-words mb-0.5">
-          {{ additionalAttributes.description }}
-        </p>
         <div class="flex flex-col items-start w-full gap-2">
           <ContactInfoRow
             :href="contact.email ? `mailto:${contact.email}` : ''"
@@ -297,22 +294,6 @@ export default {
             icon="contact-identify"
             emoji="🪪"
             :title="$t('CONTACT_PANEL.IDENTIFIER')"
-          />
-          <ContactInfoRow
-            :value="additionalAttributes.company_name"
-            icon="building-bank"
-            emoji="🏢"
-            :title="$t('CONTACT_PANEL.COMPANY')"
-            editable
-            @update="
-              value =>
-                updateContactField({
-                  additional_attributes: {
-                    ...additionalAttributes,
-                    company_name: value,
-                  },
-                })
-            "
           />
           <ContactInfoRow
             v-if="location || additionalAttributes.location"

@@ -1,0 +1,89 @@
+# Ambiente local para conferir o Chatwoot antes do deploy no Fly.
+# Constrói a imagem do fork, então carrega a marca e as customizações daqui.
+# Sobe na porta 3001 porque a 3000 costuma estar ocupada pelo app Next.js.
+#
+#   docker compose -f docker-compose.local.yaml build rails
+#   docker compose -f docker-compose.local.yaml run --rm rails bundle exec rails db:chatwoot_prepare
+#   docker compose -f docker-compose.local.yaml up -d
+#
+# Para derrubar apagando o banco: docker compose -f docker-compose.local.yaml down -v
+
+x-base: &base
+  image: vox2you/chatwoot:local
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    args:
+      # A VM do Docker Desktop tem ~8 GB; o padrao do Dockerfile estoura a memoria
+      # compilando a extensao nativa do grpc.
+      BUNDLE_JOBS: '2'
+      GRPC_RUBY_BUILD_PROCS: '2'
+  environment: &env
+    RAILS_ENV: production
+    NODE_ENV: production
+    INSTALLATION_ENV: docker
+    RAILS_LOG_TO_STDOUT: 'true'
+    RAILS_SERVE_STATIC_FILES: 'true'
+    # Chave descartável: vale só para este ambiente local.
+    SECRET_KEY_BASE: 0d0b4a3f9c1e7b52a8d64f0e3c917b8ad25e6f430a9c8b17e5d2f64a0c3b98e17f5a2c60d9b48e13f7a0c5d26b9e84f13a0c7d5b62e9f48a13c0d7b5e296f48a1
+    FRONTEND_URL: http://localhost:3001
+    POSTGRES_HOST: postgres
+    POSTGRES_DATABASE: chatwoot_production
+    POSTGRES_USERNAME: chatwoot
+    POSTGRES_PASSWORD: chatwoot
+    POSTGRES_STATEMENT_TIMEOUT: 600s
+    REDIS_URL: redis://redis:6379
+    ACTIVE_STORAGE_SERVICE: local
+    ENABLE_ACCOUNT_SIGNUP: 'false'
+    # Origem do CRM, que embute o painel na tela /chat.
+    FRAME_ANCESTORS: 'http://localhost:3000'
+    WEB_CONCURRENCY: '1'
+    RAILS_MAX_THREADS: '5'
+    SIDEKIQ_CONCURRENCY: '5'
+  volumes:
+    - storage_data:/app/storage
+    # Marca do fork por cima da imagem oficial, para conferir o visual sem rebuild.
+    - ./public/brand-assets:/app/public/brand-assets:ro
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
+services:
+  rails:
+    <<: *base
+    ports:
+      - '127.0.0.1:3001:3000'
+    entrypoint: docker/entrypoints/rails.sh
+    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+
+  sidekiq:
+    <<: *base
+    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+
+  postgres:
+    # Mesma imagem do compose de produção: o Chatwoot precisa do pgvector.
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: chatwoot_production
+      POSTGRES_USER: chatwoot
+      POSTGRES_PASSWORD: chatwoot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chatwoot -d chatwoot_production']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--maxmemory-policy', 'noeviction']
+    volumes:
+      - redis_data:/data
+
+volumes:
+  storage_data:
+  postgres_data:
+  redis_data:

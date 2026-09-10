@@ -2,8 +2,9 @@ import { computed } from 'vue';
 import { useStore, useStoreGetters } from 'dashboard/composables/store';
 
 export const DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER = Object.freeze([
+  // Aplicativos do painel abrem a lista: são a razão de a lateral existir aqui.
+  { name: 'dashboard_apps' },
   { name: 'conversation_actions' },
-  { name: 'macros' },
   { name: 'conversation_info' },
   { name: 'contact_attributes' },
   { name: 'contact_notes' },

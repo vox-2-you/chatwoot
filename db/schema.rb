@@ -12,7 +12,8 @@
 
 ActiveRecord::Schema[7.1].define(version: 2026_08_14_000000) do
   # These extensions should be enabled to support this database
-  enable_extension "pg_stat_statements"
+  # pg_stat_statements foi removido: o Fly Managed Postgres nao o oferece
+  # (usa pg_stat_monitor no lugar) e nenhum ponto do codigo consulta a extensao.
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"

@@ -149,18 +149,6 @@ const handleAvatarHover = isHovered => {
             <span class="text-base font-medium truncate text-n-slate-12">
               {{ name }}
             </span>
-            <span class="inline-flex items-center gap-1">
-              <span
-                v-if="additionalAttributes?.companyName"
-                class="i-ph-building-light size-4 text-n-slate-10 mb-0.5"
-              />
-              <span
-                v-if="additionalAttributes?.companyName"
-                class="text-sm truncate text-n-slate-11"
-              >
-                {{ additionalAttributes.companyName }}
-              </span>
-            </span>
           </div>
           <div
             class="flex flex-wrap items-center justify-start gap-x-3 gap-y-1"

@@ -37,11 +37,30 @@ export const getCredentialsFromEmail = email => {
   };
 };
 
+/**
+ * Caminho interno pedido no link de SSO, se for seguro.
+ *
+ * Só aceita caminho relativo dentro do painel: sem esquema e sem `//` no começo, senão o
+ * parâmetro viraria redirecionamento aberto — bastaria mandar `//site.com` para levar quem
+ * clica no link para fora, com a aparência de um endereço nosso.
+ */
+const safeSSORedirectPath = ssoRedirectPath => {
+  if (!ssoRedirectPath) return null;
+  if (!ssoRedirectPath.startsWith('/') || ssoRedirectPath.startsWith('//')) {
+    return null;
+  }
+  return ssoRedirectPath;
+};
+
 export const getLoginRedirectURL = ({
   ssoAccountId,
   ssoConversationId,
+  ssoRedirectPath,
   user,
 }) => {
+  const redirectPath = safeSSORedirectPath(ssoRedirectPath);
+  if (redirectPath) return redirectPath;
+
   const accountPath = getSSOAccountPath({ ssoAccountId, user });
   if (accountPath) {
     if (ssoConversationId) {

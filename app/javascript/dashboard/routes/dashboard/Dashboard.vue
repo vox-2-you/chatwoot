@@ -65,6 +65,14 @@ export default {
     };
   },
   computed: {
+    /**
+     * Embutido no CRM, o menu principal do Chatwoot sai: quem navega é a barra lateral do
+     * CRM, e duas barras empilhadas comem metade da largura útil sem oferecer nada de novo.
+     * Sozinho, o painel continua igual.
+     */
+    isEmbedded() {
+      return window.self !== window.top;
+    },
     isSmallScreen() {
       return this.windowWidth < wootConstants.SMALL_SCREEN_BREAKPOINT;
     },
@@ -131,6 +139,7 @@ export default {
 <template>
   <div class="flex flex-grow overflow-hidden text-n-slate-12">
     <NextSidebar
+      v-if="!isEmbedded"
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       @toggle-account-modal="toggleAccountModal"
       @open-key-shortcut-modal="toggleKeyShortcutModal"
@@ -148,6 +157,7 @@ export default {
         :bypass-upgrade-page="bypassUpgradePage"
       >
         <MobileSidebarLauncher
+          v-if="!isEmbedded"
           :is-mobile-sidebar-open="isMobileSidebarOpen"
           @toggle="toggleMobileSidebar"
         />
@@ -156,6 +166,7 @@ export default {
         <router-view />
         <CopilotLauncher />
         <MobileSidebarLauncher
+          v-if="!isEmbedded"
           :is-mobile-sidebar-open="isMobileSidebarOpen"
           @toggle="toggleMobileSidebar"
         />
