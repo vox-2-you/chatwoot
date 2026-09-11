@@ -271,9 +271,19 @@ Por ambiente, depois do super admin. São oito valores para o CRM e três para o
    domínio do CRM do ambiente. O `websiteToken` do trecho de script é o
    `NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN`.
 4. **ID da conta** — o número em `/app/accounts/<id>/...`; normalmente `1`.
-5. **Dashboard App** (aba "Aluno" no atendimento) — Configurações → Integrações → Dashboard
-   Apps → URL `$NEXT_ORIGIN/chatwoot/student?token=<CHATWOOT_DASHBOARD_TOKEN>`, com o valor
-   que já está na Vercel.
+5. **Dashboard Apps** (os cards do aluno no painel de atendimento) — Configurações →
+   Integrações → Dashboard Apps. São **três**, um por recorte, porque cada app vira um card
+   recolhível próprio ao lado dos contatos; um app só juntaria tudo num card chamado
+   "Aluno". A página do CRM escolhe o recorte pelo `section` da URL:
+
+   | Título | URL |
+   |---|---|
+   | Pedidos | `$NEXT_ORIGIN/chatwoot/student?token=<CHATWOOT_DASHBOARD_TOKEN>&section=orders` |
+   | Aulas | `$NEXT_ORIGIN/chatwoot/student?token=<CHATWOOT_DASHBOARD_TOKEN>&section=lessons` |
+   | Mentorias | `$NEXT_ORIGIN/chatwoot/student?token=<CHATWOOT_DASHBOARD_TOKEN>&section=mentorings` |
+
+   Sem o `section` a página mostra os três de uma vez, o que serve para conferir fora do
+   painel. O token é o `CHATWOOT_DASHBOARD_TOKEN` que já está na Vercel.
 
 ### Pelo console (webhook com secret e liberação da Platform App)
 
