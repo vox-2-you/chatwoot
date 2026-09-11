@@ -56,6 +56,8 @@ export default {
 @tailwind utilities;
 
 @import '../dashboard/assets/scss/next-colors';
+// Paleta Vox2You por cima dos tokens (ver dashboard/assets/scss/_vox2you-colors.scss).
+@import '../dashboard/assets/scss/vox2you-colors';
 
 html,
 body {
