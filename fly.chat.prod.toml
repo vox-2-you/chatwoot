@@ -1,0 +1,88 @@
+# Chatwoot no Fly.io — PRODUÇÃO
+#
+# Domínio customizado: chat.vox2you.app.br
+#   fly certs add chat.vox2you.app.br --app vox2you-chat-prod
+#   DNS (CNAME): chat -> vox2you-chat-prod.fly.dev
+#   fly certs check chat.vox2you.app.br --app vox2you-chat-prod
+#
+# App:    https://chat.vox2you.app.br/
+# Health: https://chat.vox2you.app.br/health
+# Smoke:  https://chat.vox2you.app.br/api
+#
+# Uma app, dois process groups (web + worker) a partir da mesma imagem. Postgres
+# (fly mpg), Redis (fly redis) e anexos (fly storage) são recursos do próprio Fly —
+# veja DEPLOY_FLY.md. FRONTEND_URL e FRAME_ANCESTORS são secrets, não [env].
+
+app = "vox2you-chat-prod"
+primary_region = "gru"
+kill_timeout = "60s"
+
+[build]
+  dockerfile = "docker/Dockerfile"
+
+[deploy]
+  # Carrega o schema na primeira subida e roda as migrations nas seguintes.
+  release_command = "bundle exec rails db:chatwoot_prepare"
+  # A primeira release carrega schema + seed e passa dos 5 min padrão.
+  release_command_timeout = "15m"
+  strategy = "rolling"
+
+[env]
+  RAILS_ENV = "production"
+  NODE_ENV = "production"
+  INSTALLATION_ENV = "fly"
+  RAILS_LOG_TO_STDOUT = "true"
+  RAILS_SERVE_STATIC_FILES = "true"
+  LOG_LEVEL = "info"
+  PORT = "3000"
+  # Liga force_ssl e o cookie de sessão Secure; o TLS termina no proxy do Fly.
+  FORCE_SSL = "true"
+  # Timeout maior que o padrão de 14s para as migrations pesadas não estourarem.
+  POSTGRES_STATEMENT_TIMEOUT = "600s"
+  WEB_CONCURRENCY = "2"
+  RAILS_MAX_THREADS = "5"
+  SIDEKIQ_CONCURRENCY = "5"
+  DEFAULT_LOCALE = "pt_BR"
+  # Cadastro público desligado: os usuários são criados pelo super admin.
+  ENABLE_ACCOUNT_SIGNUP = "false"
+
+[processes]
+  # Bind em [::]: o proxy e o health check do Fly chegam pelo IPv6 privado da máquina,
+  # e 0.0.0.0 só escuta IPv4 ("connection refused" no check).
+  web = "bundle exec rails server -b [::] -p 3000 -e production"
+  worker = "bundle exec sidekiq -C config/sidekiq.yml"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_start_machines = true
+  # Não pode hibernar: o ActionCable mantém websockets abertos.
+  auto_stop_machines = false
+  min_machines_running = 1
+  processes = ["web"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 150
+    hard_limit = 200
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "GET"
+    path = "/health"
+    # Com FORCE_SSL o Rails redireciona (301) qualquer requisição que não pareça HTTPS,
+    # e o check falharia; o cabeçalho diz ao Rails que o TLS terminou no proxy.
+    [http_service.checks.headers]
+      X-Forwarded-Proto = "https"
+
+[[vm]]
+  processes = ["web"]
+  size = "shared-cpu-2x"
+  memory = "2gb"
+
+[[vm]]
+  processes = ["worker"]
+  size = "shared-cpu-2x"
+  memory = "2gb"

@@ -15,3 +15,12 @@ vendor/bundle
 .DS_Store
 *.swp
 *~
+
+# Fora do contexto de build (só upload, nada disso entra na imagem final):
+# .git pesa ~400 MB e o SHA entra por --build-arg GIT_SHA; spec/ já era apagado após o
+# precompile; tests/, docs/ e .github/ não são lidos pelo build nem em runtime.
+.git
+spec
+tests
+docs
+.github

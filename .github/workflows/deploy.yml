@@ -1,0 +1,60 @@
+name: Deploy to Fly.io
+
+# Build no builder remoto do Fly, como no vox2you-bullmq. Se a compilação nativa do
+# grpc derrubar o builder por memória, acrescente ao flyctl deploy:
+#   --build-arg BUNDLE_JOBS=2 --build-arg GRPC_RUBY_BUILD_PROCS=2
+# (args já aceitos pelo docker/Dockerfile). Próximo recurso: `fly deploy --depot`.
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy-sandbox:
+    name: Sandbox (develop)
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: sandbox
+    concurrency:
+      group: fly-deploy-vox2you-chat-sandbox
+      cancel-in-progress: true
+
+    steps:
+      # O Dockerfile roda `git rev-parse HEAD`; o checkout raso já traz o .git.
+      - uses: actions/checkout@v6
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy vox2you-chat-sandbox
+        run: |
+          flyctl deploy \
+            --config fly.chat.sandbox.toml \
+            --remote-only \
+            --build-arg GIT_SHA="${{ github.sha }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-prod:
+    name: Production (main)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: fly-deploy-vox2you-chat-prod
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy vox2you-chat-prod
+        run: |
+          flyctl deploy \
+            --config fly.chat.prod.toml \
+            --remote-only \
+            --build-arg GIT_SHA="${{ github.sha }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

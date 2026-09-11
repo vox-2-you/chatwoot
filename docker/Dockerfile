@@ -96,8 +96,11 @@ RUN if [ "$RAILS_ENV" = "production" ]; then \
   && rm -rf spec node_modules tmp/cache; \
   fi
 
-# Generate .git_sha file with current commit hash
-RUN git rev-parse HEAD > /app/.git_sha
+# Grava o SHA do commit em /app/.git_sha (config/initializers/git_sha.rb lê no boot).
+# Vem por --build-arg GIT_SHA (o .git fica fora do contexto de build por causa do
+# tamanho); sem o arg, cai no git rev-parse se o .git tiver sido copiado, senão "unknown".
+ARG GIT_SHA=""
+RUN { [ -n "$GIT_SHA" ] && echo "$GIT_SHA" || git rev-parse HEAD 2>/dev/null || echo unknown; } > /app/.git_sha
 
 # Remove unnecessary files
 RUN rm -rf /gems/ruby/3.4.0/cache/*.gem \
