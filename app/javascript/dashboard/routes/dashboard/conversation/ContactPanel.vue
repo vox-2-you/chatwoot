@@ -182,7 +182,9 @@ onMounted(() => {
                   )
               "
             >
-              <div class="h-96">
+              <!-- Altura mínima: o app que informa a própria altura cresce até ela e a
+                   lateral rola por inteiro, em vez de rolar dentro do card. -->
+              <div class="min-h-96">
                 <DashboardAppFrame
                   :key="currentChat.id + '-' + dashboardApp.id"
                   :is-visible="

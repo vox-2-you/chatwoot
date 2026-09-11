@@ -3,6 +3,11 @@ import LoadingState from 'dashboard/components/widgets/LoadingState.vue';
 
 const FETCH_INFO_MESSAGE = 'chatwoot-dashboard-app:fetch-info';
 const APP_CONTEXT_EVENT = 'appContext';
+/**
+ * O app embutido pede a própria altura. Sem isso o iframe fica na altura fixa da lateral e
+ * o conteúdo ganha uma segunda barra de rolagem, dentro de um painel que já rola.
+ */
+const FRAME_HEIGHT_EVENT = 'dashboardApp:height';
 const DARK_THEME = 'dark';
 const LIGHT_THEME = 'light';
 
@@ -35,6 +40,8 @@ export default {
     return {
       hasOpenedAtleastOnce: false,
       iframeLoading: true,
+      // Altura que cada app pediu, em px. Sem pedido, o app fica na altura fixa do CSS.
+      frameHeights: {},
       currentTheme: getCurrentTheme(),
       themeObserver: null,
     };
@@ -94,13 +101,37 @@ export default {
   methods: {
     triggerEvent(event) {
       if (!this.isVisible) return;
-      if (event.data !== FETCH_INFO_MESSAGE) return;
 
       const frameIndex = this.config.findIndex((_, index) => {
         const frameElement = document.getElementById(this.getFrameId(index));
         return frameElement?.contentWindow === event.source;
       });
-      if (frameIndex >= 0) this.sendContext(frameIndex);
+      if (frameIndex < 0) return;
+
+      if (event.data === FETCH_INFO_MESSAGE) {
+        this.sendContext(frameIndex);
+        return;
+      }
+
+      // O app diz de quanto precisa e o iframe passa a ter essa altura, para o conteúdo
+      // não ganhar uma barra de rolagem própria dentro da lateral — quem rola é a lateral.
+      const height = this.parseHeightMessage(event.data);
+      if (height) this.frameHeights = { ...this.frameHeights, [frameIndex]: height };
+    },
+    parseHeightMessage(data) {
+      if (typeof data !== 'string') return null;
+      try {
+        const message = JSON.parse(data);
+        if (message?.event !== FRAME_HEIGHT_EVENT) return null;
+        const height = Number(message.height);
+        return Number.isFinite(height) && height > 0 ? Math.ceil(height) : null;
+      } catch {
+        return null;
+      }
+    },
+    frameStyle(index) {
+      const height = this.frameHeights[index];
+      return height ? { height: `${height}px` } : {};
     },
     onThemeChange() {
       const theme = getCurrentTheme();
@@ -149,6 +180,7 @@ export default {
         v-if="configItem.type === 'frame' && configItem.url"
         :id="getFrameId(index)"
         :src="configItem.url"
+        :style="frameStyle(index)"
         @load="() => sendContext(index)"
       />
     </div>
@@ -159,11 +191,14 @@ export default {
 .dashboard-app--container,
 .dashboard-app--list,
 .dashboard-app--list iframe {
-  height: 100%;
+  /* Mínimo, não fixo: o `style` inline do iframe sobrepõe com a altura que o app pediu. */
+  min-height: 100%;
   width: 100%;
 }
 
 .dashboard-app--list iframe {
+  display: block;
+  height: 100%;
   border: 0;
 }
 .dashboard-app_loading-container {
