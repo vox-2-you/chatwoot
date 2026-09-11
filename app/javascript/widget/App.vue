@@ -396,4 +396,6 @@ export default {
 
 <style lang="scss">
 @import 'widget/assets/scss/woot.scss';
+// Paleta Vox2You por cima dos tokens (ver vox2you-colors.scss).
+@import 'widget/assets/scss/vox2you-colors.scss';
 </style>

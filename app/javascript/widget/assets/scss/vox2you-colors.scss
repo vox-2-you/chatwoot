@@ -1,0 +1,89 @@
+// Paleta Vox2You por cima dos tokens do Chatwoot.
+//
+// O painel e o widget pintam quase tudo com duas escalas Radix: `--slate-*` (fundo,
+// superfícies, bordas, texto) e `--blue-*` (acento, links, botões primários). Redefinir só
+// essas variáveis, depois de `_next-colors.scss`, troca a paleta inteira sem tocar em
+// componente nenhum — e sem conflito de merge com o upstream, que não conhece este arquivo.
+//
+// Os valores vêm do `globals.css` do CRM: cinzas neutros (fundo #1A1A1A, superfícies
+// #252525/#2A2A2A, borda #333, texto secundário #A6A6A6) no lugar do cinza-azulado, e o
+// teal secundário (#00C8C8 claro, #00E6E6 escuro) no lugar do azul. A numeração segue a
+// semântica Radix: 1-2 fundo, 3-5 elemento/hover/ativo, 6-8 bordas, 9-10 sólido, 11-12 texto.
+@layer base {
+  :root {
+    // slate → neutro
+    --slate-1: 255 255 255;
+    --slate-2: 250 250 250;
+    --slate-3: 245 245 245;
+    --slate-4: 240 240 240;
+    --slate-5: 235 235 235;
+    --slate-6: 230 230 230;
+    --slate-7: 219 219 219;
+    --slate-8: 191 191 191;
+    --slate-9: 140 140 140;
+    --slate-10: 128 128 128;
+    --slate-11: 115 115 115;
+    --slate-12: 26 26 26;
+
+    // blue → teal (#00C8C8; hover #00B8B8)
+    --blue-1: 250 255 255;
+    --blue-2: 240 253 253;
+    --blue-3: 224 250 250;
+    --blue-4: 204 246 246;
+    --blue-5: 178 240 240;
+    --blue-6: 148 230 230;
+    --blue-7: 110 216 216;
+    --blue-8: 60 200 200;
+    --blue-9: 0 200 200;
+    --blue-10: 0 184 184;
+    --blue-11: 0 140 140;
+    --blue-12: 0 61 61;
+
+    // Tokens semânticos derivados do azul
+    --text-blue: 0 44 44;
+    --solid-blue: 204 246 246;
+    --solid-blue-2: 250 255 255;
+  }
+
+  .dark {
+    // slate → neutro
+    --slate-1: 26 26 26;
+    --slate-2: 31 31 31;
+    --slate-3: 37 37 37;
+    --slate-4: 42 42 42;
+    --slate-5: 48 48 48;
+    --slate-6: 51 51 51;
+    --slate-7: 61 61 61;
+    --slate-8: 82 82 82;
+    --slate-9: 110 110 110;
+    --slate-10: 128 128 128;
+    --slate-11: 166 166 166;
+    --slate-12: 255 255 255;
+
+    // blue → teal (#00E6E6; hover #00CCCC)
+    --blue-1: 10 24 24;
+    --blue-2: 13 31 31;
+    --blue-3: 10 44 44;
+    --blue-4: 8 56 56;
+    --blue-5: 10 69 69;
+    --blue-6: 16 85 85;
+    --blue-7: 20 105 105;
+    --blue-8: 20 135 135;
+    --blue-9: 0 200 200;
+    --blue-10: 0 230 230;
+    --blue-11: 102 240 240;
+    --blue-12: 204 250 250;
+
+    // Superfícies e sólidos do tema escuro, alinhados ao fundo #1A1A1A do CRM
+    --surface-1: 26 26 26;
+    --surface-2: 31 31 31;
+    --surface-active: 48 48 48;
+    --solid-1: 31 31 31;
+    --solid-2: 37 37 37;
+    --solid-3: 42 42 42;
+    --solid-active: 48 48 48;
+    --text-blue: 204 250 250;
+    --solid-blue: 8 56 56;
+    --solid-blue-2: 13 31 31;
+  }
+}

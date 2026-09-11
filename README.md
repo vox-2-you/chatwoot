@@ -3,6 +3,12 @@
 
 ___
 
+> **Fork Vox2You.** O deploy no Fly.io (sandbox e produção), a integração com o CRM e o
+> passo a passo de produção estão em [DEPLOY_FLY.md](DEPLOY_FLY.md). O que muda em relação
+> ao upstream: `FRAME_ANCESTORS`, `sso_redirect_path`, `pg_stat_statements` fora do schema,
+> a paleta Vox2You por cima dos tokens de cor (`_vox2you-colors.scss` no painel e no widget),
+> `fly.chat.*.toml` e `.github/workflows/deploy.yml`.
+
 # Chatwoot
 
 The modern customer support platform, an open-source alternative to Intercom, Zendesk, Salesforce Service Cloud etc.
