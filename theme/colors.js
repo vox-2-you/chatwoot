@@ -226,7 +226,8 @@ export const colors = {
     },
 
     black: '#000000',
-    brand: '#2781F6',
+    // Vox2You: a cor da marca sai de --brand (ver dashboard/assets/scss/_vox2you-colors.scss).
+    brand: 'rgb(var(--brand, 0 200 200) / <alpha-value>)',
     portal: 'var(--dynamic-portal-color)',
     'portal-soft': 'var(--dynamic-portal-color-soft)',
     'portal-faint': 'var(--dynamic-portal-color-faint)',
